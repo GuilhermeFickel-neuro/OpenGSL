@@ -9,7 +9,9 @@ import os
 import urllib.request
 from torch_geometric.utils import degree
 import torch_geometric.transforms as T
-# from ogb.nodeproppred import PygNodePropPredDataset
+from ogb.nodeproppred import PygNodePropPredDataset
+
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
 class Dataset:
@@ -40,7 +42,7 @@ class Dataset:
         self.feat_norm = feat_norm
         self.verbose = verbose
         self.path = path
-        self.device = torch.device('cuda')
+        self.device = DEVICE
         self.single_graph = True
         self.split_params = split_params
         self.n_splits = n_splits
@@ -98,23 +100,23 @@ class Dataset:
             if feat_norm:
                 self.feats = normalize(self.feats, style='row')
 
-        # elif ds_name in ['ogbn-arxiv']:
-        #     self.data_raw = PygNodePropPredDataset(name='ogbn-arxiv', root='./data')
-        #     self.g = self.data_raw[0]
-        #     self.feats = self.g.x  # unnormalized
-        #     self.n_nodes = self.feats.shape[0]
-        #     self.dim_feats = self.feats.shape[1]
-        #     self.labels = self.g.y
-        #     reverse_edge_index = torch.stack([self.g.edge_index[1], self.g.edge_index[0]])
-        #
-        #     self.adj = torch.sparse.FloatTensor(torch.cat([reverse_edge_index, self.g.edge_index], dim=1), torch.ones(self.g.edge_index.shape[1]*2),
-        #                                         [self.n_nodes, self.n_nodes])
-        #     self.n_edges = self.g.num_edges
-        #     self.n_classes = self.data_raw.num_classes
-        #
-        #     self.feats = self.feats.to(self.device)
-        #     self.labels = self.labels.to(self.device).view(-1)
-        #     self.adj = self.adj.to(self.device)
+        elif ds_name in ['ogbn-arxiv', 'ogbn-papers100M']:
+            self.data_raw = PygNodePropPredDataset(name=ds_name, root='./data')
+            self.g = self.data_raw[0]
+            self.feats = self.g.x  # unnormalized
+            self.n_nodes = self.feats.shape[0]
+            self.dim_feats = self.feats.shape[1]
+            self.labels = self.g.y
+            reverse_edge_index = torch.stack([self.g.edge_index[1], self.g.edge_index[0]])
+        
+            self.adj = torch.sparse.FloatTensor(torch.cat([reverse_edge_index, self.g.edge_index], dim=1), torch.ones(self.g.edge_index.shape[1]*2),
+                                                [self.n_nodes, self.n_nodes])
+            self.n_edges = self.g.num_edges
+            self.n_classes = self.data_raw.num_classes
+        
+            self.feats = self.feats.to(self.device)
+            self.labels = self.labels.to(self.device).view(-1)
+            self.adj = self.adj.to(self.device)
 
         else:
             # graph level
@@ -169,7 +171,17 @@ class Dataset:
         self.train_masks = []
         self.val_masks = []
         self.test_masks = []
-        if split == 'public':
+        if self.name in ['ogbn-arxiv', 'ogbn-papers100M']:
+            split_idx = self.data_raw.get_idx_split()
+            train_idx = split_idx['train']
+            val_idx = split_idx['valid']
+            test_idx = split_idx['test']
+            for i in range(n_splits):
+                self.train_masks.append(train_idx.numpy())
+                self.val_masks.append(val_idx.numpy())
+                self.test_masks.append(test_idx.numpy())
+    
+        elif split == 'public':
             assert self.name in ['cora', 'citeseer', 'pubmed', 'blogcatalog', 'flickr', 'roman-empire', 'amazon-ratings',
                                  'minesweeper', 'tolokers', 'questions', 'wikics'], 'This dataset has no public splits.'
             if self.name in ['cora', 'citeseer', 'pubmed']:

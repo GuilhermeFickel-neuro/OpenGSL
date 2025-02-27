@@ -9,6 +9,7 @@ import networkx as nx
 import multiprocessing as mp
 import math
 
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class PASTELSolver(Solver):
     '''
@@ -183,7 +184,7 @@ class PASTELSolver(Solver):
         graph_loss = 0
         L = torch.diagflat(torch.sum(out_adj, -1)) - out_adj
         graph_loss += self.conf.training['smoothness_ratio'] * torch.trace(torch.mm(features.transpose(-1, -2), torch.mm(L, features))) / int(np.prod(out_adj.shape))
-        ones_vec = torch.ones(out_adj.size(-1)).cuda()
+        ones_vec = torch.ones(out_adj.size(-1)).to(DEVICE)
         graph_loss += -self.conf.training['degree_ratio'] * torch.mm(ones_vec.unsqueeze(0), torch.log(torch.mm(out_adj, ones_vec.unsqueeze(-1)) + 1e-12)).squeeze() / out_adj.shape[-1]
         graph_loss += self.conf.training['sparsity_ratio'] * torch.sum(torch.pow(out_adj, 2)) / int(np.prod(out_adj.shape))
         return graph_loss

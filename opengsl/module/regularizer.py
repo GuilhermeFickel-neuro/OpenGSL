@@ -5,6 +5,8 @@ from torch.optim import Optimizer
 from torch.optim.optimizer import required
 import scipy.sparse as sp
 
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+
 
 def connectivity_regularizer(adj):
     '''
@@ -186,7 +188,7 @@ class ProxOperators:
         """Proximal operator for nuclear norm (trace norm).
         """
         U, S, V = np.linalg.svd(data.cpu())
-        U, S, V = torch.FloatTensor(U).cuda(), torch.FloatTensor(S).cuda(), torch.FloatTensor(V).cuda()
+        U, S, V = torch.FloatTensor(U).to(DEVICE), torch.FloatTensor(S).to(DEVICE), torch.FloatTensor(V).to(DEVICE)
         self.nuclear_norm = S.sum()
         # print("nuclear norm: %.4f" % self.nuclear_norm)
 
@@ -198,7 +200,7 @@ class ProxOperators:
         values = data[indices[0], indices[1]] # modify this based on dimensionality
         data_sparse = sp.csr_matrix((values.cpu().numpy(), indices.cpu().numpy()))
         U, S, V = sp.linalg.svds(data_sparse, k=k)
-        U, S, V = torch.FloatTensor(U).cuda(), torch.FloatTensor(S).cuda(), torch.FloatTensor(V).cuda()
+        U, S, V = torch.FloatTensor(U).to(DEVICE), torch.FloatTensor(S).to(DEVICE), torch.FloatTensor(V).to(DEVICE)
         self.nuclear_norm = S.sum()
         diag_S = torch.diag(torch.clamp(S-alpha, min=0))
         return torch.matmul(torch.matmul(U, diag_S), V)
@@ -210,7 +212,7 @@ class ProxOperators:
         # print(f"rank = {len(S.nonzero())}")
         self.nuclear_norm = S.sum()
         S = torch.clamp(S-alpha, min=0)
-        indices = torch.tensor([range(0, U.shape[0]),range(0, U.shape[0])]).cuda()
+        indices = torch.tensor([range(0, U.shape[0]),range(0, U.shape[0])]).to(DEVICE)
         values = S
         diag_S = torch.sparse.FloatTensor(indices, values, torch.Size(U.shape))
         # diag_S = torch.diag(torch.clamp(S-alpha, min=0))

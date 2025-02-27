@@ -5,9 +5,10 @@ from opengsl.config.util import save_conf
 import os
 import time as time
 import copy
-import ruamel.yaml as yaml
+from ruamel.yaml import YAML
 from torch_geometric import seed_everything
 
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class ExpManager:
     '''
@@ -44,7 +45,7 @@ class ExpManager:
         self.method = solver.method_name
         self.dataset = solver.dataset
         self.data = self.dataset.name
-        self.device = torch.device('cuda')
+        self.device = DEVICE
         # you can change random seed here
         self.train_seeds = [i for i in range(400)]
         self.save_path = None
@@ -124,5 +125,6 @@ class ExpManager:
         d['result'] = stats
         d.update(vars(copy.deepcopy(self.conf)))
         path = os.path.join(self.save_path, '{}_{}_'.format(self.method, self.data)+time.strftime('%Y%m%d_%H%M%S', time.localtime())+'.yaml')
+        yaml = YAML(typ='unsafe', pure=True)
         with open(path, "w", encoding="utf-8") as f:
-            yaml.dump(d, f, indent=2)
+            yaml.dump(d, f)

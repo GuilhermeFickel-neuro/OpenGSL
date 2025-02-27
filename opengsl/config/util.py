@@ -1,4 +1,5 @@
-import ruamel.yaml as yaml
+from ruamel.yaml import YAML
+import ruamel.yaml
 import argparse
 import os
 import warnings
@@ -23,7 +24,7 @@ def load_conf(path:str = None, method:str = None, dataset:str = None):
         The config file converted to Namespace.
 
     '''
-    warnings.simplefilter('ignore', yaml.error.UnsafeLoaderWarning)
+    warnings.simplefilter('ignore', ruamel.yaml.error.YAMLError)
     if path == None and method == None:
         raise KeyError
     if path == None and dataset == None:
@@ -39,6 +40,8 @@ def load_conf(path:str = None, method:str = None, dataset:str = None):
             raise KeyError("The configuration file is not provided.")
 
     conf = open(path, "r").read()
+    yaml = YAML(typ='rt')
+    
     conf = yaml.load(conf)
 
     try:

@@ -11,6 +11,7 @@ from opengsl.module.metric import Cosine
 from opengsl.module.encoder import GNNEncoder_OpenGSL, MLPEncoder
 
 EOS = 1e-10
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
 class GCNConv_dense(nn.Module):
@@ -341,7 +342,7 @@ def get_feat_mask(features, mask_rate):
     mask = torch.zeros(features.shape)
     samples = np.random.choice(feat_node, size=int(feat_node * mask_rate), replace=False)
     mask[:, samples] = 1
-    return mask.cuda(), samples
+    return mask.to(DEVICE), samples
 
 
 def split_batch(init_list, batch_size):

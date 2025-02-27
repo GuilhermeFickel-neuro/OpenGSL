@@ -6,6 +6,7 @@ import torch_geometric.nn
 from opengsl.module.metric import Cosine
 from opengsl.utils.utils import scipy_sparse_to_sparse_tensor, sparse_tensor_to_scipy_sparse
 
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def normalize(mx, style='symmetric', add_loop=True, p=None):
     '''
@@ -199,11 +200,11 @@ def to_undirected(adj):
 def knn_fast(X, k, b):
     X = F.normalize(X, dim=1, p=2)
     index = 0
-    values = torch.zeros(X.shape[0] * (k + 1)).cuda()
-    rows = torch.zeros(X.shape[0] * (k + 1)).cuda()
-    cols = torch.zeros(X.shape[0] * (k + 1)).cuda()
-    norm_row = torch.zeros(X.shape[0]).cuda()
-    norm_col = torch.zeros(X.shape[0]).cuda()
+    values = torch.zeros(X.shape[0] * (k + 1)).to(DEVICE)
+    rows = torch.zeros(X.shape[0] * (k + 1)).to(DEVICE)
+    cols = torch.zeros(X.shape[0] * (k + 1)).to(DEVICE)
+    norm_row = torch.zeros(X.shape[0]).to(DEVICE)
+    norm_col = torch.zeros(X.shape[0]).to(DEVICE)
     while index < X.shape[0]:
         if (index + b) > (X.shape[0]):
             end = X.shape[0]

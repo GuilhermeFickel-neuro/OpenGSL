@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "opengsl"
+version = "0.0.6"
+description = "A comprehensive benchmark for Graph Structure Learning."
+readme = "README.md"
+authors = [
+    {name = "Zhiyao Zhou"},
+    {name = "Sheng Zhou"},
+    {name = "Bochao Mao"},
+    {name = "Xuanyi Zhou"}
+]
+requires-python = ">=3.7.0"
+keywords = ["AI", "GNN", "graph structure learning"]
+classifiers = [
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+]
+dependencies = [
+    "ruamel.yaml",
+    "pandas",
+    "packaging",
+    "scipy",
+    "scikit-learn",
+    "pyro-api",
+    "pyro-ppl",
+    "numba",
+    "torch<2",
+    "torch_geometric",
+    "torch_sparse",
+    "torch_scatter",
+    "dgl<2",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/OpenGSL/OpenGSL"
+"Repository" = "https://github.com/OpenGSL/OpenGSL"

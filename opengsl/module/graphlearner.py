@@ -11,6 +11,8 @@ from opengsl.module.transform import KNN, NonLinear
 from opengsl.module.functional import knn_fast
 import dgl
 
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+
 
 class GraphLearner(nn.Module):
     '''
@@ -194,7 +196,7 @@ class AttLearner(GraphLearner):
             cols_ = torch.cat((cols, rows))
             values_ = torch.cat((values, values))
             values_ = self.non_linear(values_)
-            adj = dgl.graph((rows_, cols_), num_nodes=x.shape[0], device='cuda')
+            adj = dgl.graph((rows_, cols_), num_nodes=x.shape[0], device=DEVICE)
             adj.edata['w'] = values_
             return adj
         else:
@@ -263,7 +265,7 @@ class MLPLearner(GraphLearner):
             cols_ = torch.cat((cols, rows))
             values_ = torch.cat((values, values))
             values_ = self.non_linear(values_)
-            adj = dgl.graph((rows_, cols_), num_nodes=x.shape[0], device='cuda')
+            adj = dgl.graph((rows_, cols_), num_nodes=x.shape[0], device=DEVICE)
             adj.edata['w'] = values_
             return adj
         else:

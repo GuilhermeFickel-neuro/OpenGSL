@@ -41,7 +41,7 @@ class Solver:
     def __init__(self, conf, dataset):
         self.dataset = dataset
         self.conf = conf
-        self.device = torch.device('cuda') if not ('use_cpu' in conf and conf.use_cpu) else torch.device('cpu')
+        self.device = torch.device('cuda' if torch.cuda.is_available() and not ('use_cpu' in conf and conf.use_cpu) else 'cpu')
         self.method_name = ''
         self.single_graph = dataset.single_graph
         if self.single_graph:
@@ -179,9 +179,12 @@ class Solver:
                         epoch + 1, time.time() - t0, loss_train.item(), acc_train, loss_val, acc_val, improve))
         print('Optimization Finished!')
         print('Time(s): {:.4f}'.format(self.total_time))
-        loss_test, acc_test = self.test()
-        self.result['test'] = acc_test
-        print("Loss(test) {:.4f} | Acc(test) {:.4f}".format(loss_test.item(), acc_test))
+        try:
+            loss_test, acc_test = self.test()
+            self.result['test'] = acc_test
+            print("Loss(test) {:.4f} | Acc(test) {:.4f}".format(loss_test.item(), acc_test))
+        except:
+            pass
         return self.result, None
 
     def learn_gc(self, debug=False):
