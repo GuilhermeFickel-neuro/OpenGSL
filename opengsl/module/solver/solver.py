@@ -84,8 +84,9 @@ class Solver:
         graph : torch.tensor
             The learned structure. `None` for GNN methods.
         '''
-        if ('use_deterministic' not in self.conf) or self.conf.use_deterministic:
-            torch.use_deterministic_algorithms(True)
+        # BUG: fix this call
+        # if ('use_deterministic' not in self.conf) or self.conf.use_deterministic:
+        #     torch.use_deterministic_algorithms(True)
         self.set(split)
         return self.learn_nc(debug) if self.single_graph else self.learn_gc(debug)
 
