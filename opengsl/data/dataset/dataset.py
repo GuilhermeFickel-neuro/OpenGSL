@@ -100,7 +100,7 @@ class Dataset:
             if feat_norm:
                 self.feats = normalize(self.feats, style='row')
 
-        elif ds_name in ['ogbn-arxiv', 'ogbn-papers100M']:
+        elif ds_name in ['ogbn-arxiv', 'ogbn-papers100M', 'ogbn-products', 'ogbn-mag']:
             self.data_raw = PygNodePropPredDataset(name=ds_name, root='./data')
             self.g = self.data_raw[0]
             self.feats = self.g.x  # unnormalized
