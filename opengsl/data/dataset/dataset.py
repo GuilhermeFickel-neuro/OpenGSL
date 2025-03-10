@@ -171,7 +171,7 @@ class Dataset:
         self.train_masks = []
         self.val_masks = []
         self.test_masks = []
-        if self.name in ['ogbn-arxiv', 'ogbn-papers100M']:
+        if self.name in ['ogbn-arxiv', 'ogbn-papers100M', 'ogbn-products']:
             split_idx = self.data_raw.get_idx_split()
             train_idx = split_idx['train']
             val_idx = split_idx['valid']
