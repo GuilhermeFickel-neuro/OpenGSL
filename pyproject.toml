@@ -31,6 +31,7 @@ dependencies = [
     "scikit-learn",
     "pyro-api",
     "pyro-ppl",
+    "matplotlib",
     "numba",
     "torch<2",
     "torch_geometric",
