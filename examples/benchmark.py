@@ -8,10 +8,10 @@ import numpy as np
 from datetime import datetime
 import matplotlib.pyplot as plt
 
+
 class MemoryTracker:
     def __init__(self, log_file="memory_usage.csv"):
         """Initialize a memory tracker that logs memory usage to a CSV file.
-        
         Args:
             log_file: Path to the CSV file where memory usage will be logged.
         """
@@ -21,14 +21,16 @@ class MemoryTracker:
         self.method = None
         self.dataset = None
         
+        # Check if CUDA (GPU) is available
+        self.cuda_available = torch.cuda.is_available()
+        
         # Initialize log file with headers if it doesn't exist
         if not os.path.exists(log_file):
             with open(log_file, 'w') as f:
-                f.write("timestamp,method,dataset,memory_mb,cpu_percent,elapsed_time_s,event\n")
-    
+                f.write("timestamp,method,dataset,memory_mb,cpu_percent,gpu_memory_mb,elapsed_time_s,event\n")
+
     def start(self, method, dataset):
         """Start tracking for a new experiment.
-        
         Args:
             method: The method name being tested.
             dataset: The dataset name being used.
@@ -37,77 +39,90 @@ class MemoryTracker:
         self.method = method
         self.dataset = dataset
         self.log("experiment_start")
-    
+
     def log(self, event):
         """Log the current memory usage.
-        
         Args:
             event: A string describing the current event/stage.
+        
+        Returns:
+            Tuple containing tracked metrics (CPU memory, CPU percent, [GPU memory if available], elapsed time)
         """
         memory_mb = self.process.memory_info().rss / (1024 * 1024)  # Convert to MB
         cpu_percent = self.process.cpu_percent()
         elapsed_time = time.time() - self.start_time if self.start_time else 0
-        
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-        with open(self.log_file, 'a') as f:
-            f.write(f"{timestamp},{self.method},{self.dataset},{memory_mb:.2f},{cpu_percent:.2f},{elapsed_time:.2f},{event}\n")
+        # Get GPU memory if available
+        gpu_memory_mb = 0.0  # Default to 0 when GPU is not available
+        if self.cuda_available:
+            # Get allocated memory in bytes and convert to MB
+            gpu_memory_mb = torch.cuda.memory_allocated() / (1024 * 1024)
         
-        return memory_mb, cpu_percent, elapsed_time
-    
+        # Always write both CPU and GPU memory to maintain consistent columns
+        with open(self.log_file, 'a') as f:
+            f.write(f"{timestamp},{self.method},{self.dataset},{memory_mb:.2f},{cpu_percent:.2f},{gpu_memory_mb:.2f},{elapsed_time:.2f},{event}\n")
+        
+        return memory_mb, cpu_percent, gpu_memory_mb, elapsed_time
+
     def end(self):
         """End tracking for the current experiment."""
         self.log("experiment_end")
-        
+
     def plot_memory_usage(self, methods=None, datasets=None):
         """Generate plots of memory usage across experiments.
-        
         Args:
             methods: List of methods to include in the plot (None for all).
             datasets: List of datasets to include in the plot (None for all).
         """
         try:
             df = pd.read_csv(self.log_file)
-            
             if methods:
                 df = df[df['method'].isin(methods)]
             if datasets:
                 df = df[df['dataset'].isin(datasets)]
-            
+                
             # Create unique experiment identifiers
             df['experiment'] = df['method'] + '_' + df['dataset']
             
             # Plot memory usage over time for each experiment
             plt.figure(figsize=(12, 6))
             for exp, group in df.groupby('experiment'):
-                plt.plot(group['elapsed_time_s'], group['memory_mb'], label=exp)
-            
+                plt.plot(group['elapsed_time_s'], group['memory_mb'], label=f"{exp} (CPU)")
+                plt.plot(group['elapsed_time_s'], group['gpu_memory_mb'], 
+                         label=f"{exp} (GPU)", linestyle='--')
+                    
             plt.xlabel('Elapsed Time (s)')
             plt.ylabel('Memory Usage (MB)')
             plt.title('Memory Usage Over Time')
             plt.legend()
             plt.grid(True)
-            
             plt.savefig('memory_usage_plot.png')
             print(f"Memory usage plot saved to memory_usage_plot.png")
             
-            # Summary statistics
-            summary = df.groupby(['method', 'dataset']).agg({
+            # Summary statistics - always include GPU metrics
+            agg_dict = {
                 'memory_mb': ['mean', 'max'],
                 'cpu_percent': ['mean', 'max'],
+                'gpu_memory_mb': ['mean', 'max'],
                 'elapsed_time_s': ['max']
-            }).reset_index()
+            }
+                
+            summary = df.groupby(['method', 'dataset']).agg(agg_dict).reset_index()
             
-            summary.columns = ['method', 'dataset', 'avg_memory_mb', 'peak_memory_mb', 
-                             'avg_cpu_percent', 'peak_cpu_percent', 'total_time_s']
+            # Flatten the multi-level column names
+            column_names = ['method', 'dataset', 'avg_memory_mb', 'peak_memory_mb',
+                           'avg_cpu_percent', 'peak_cpu_percent', 
+                           'avg_gpu_memory_mb', 'peak_gpu_memory_mb', 'total_time_s']
+            summary.columns = column_names
             
             summary.to_csv('memory_usage_summary.csv', index=False)
             print(f"Summary statistics saved to memory_usage_summary.csv")
-            
             return summary
         except Exception as e:
             print(f"Error generating plots: {e}")
             return None
+
 
 def run_experiment(method, dataset, n_runs=10, feat_norm=True):
     """Run an experiment with a specific method and dataset while tracking memory.
