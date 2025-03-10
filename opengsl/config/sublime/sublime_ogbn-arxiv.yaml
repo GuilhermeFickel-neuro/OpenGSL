@@ -10,7 +10,7 @@ dropedge_cls: 0.25
 n_layers_cls: 3
 patience_cls: 100
 
-epochs: 1000
+epochs: 10
 lr: 0.001
 wd: 0.0
 n_hidden: 256
@@ -23,7 +23,7 @@ type_learner: mlp
 k: 10
 sim_function: cosine
 activation_learner: F.relu
-eval_freq: 200
+eval_freq: 2
 tau: 0.9999
 maskfeat_rate_learner: 0.4
 maskfeat_rate_anchor: 0.4
