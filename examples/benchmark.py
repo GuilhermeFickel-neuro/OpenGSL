@@ -5,6 +5,7 @@ import time
 import logging
 import pandas as pd
 import numpy as np
+import torch
 from datetime import datetime
 import matplotlib.pyplot as plt
 
@@ -262,7 +263,7 @@ def run_benchmark(methods, datasets, n_runs=10):
 if __name__ == "__main__":
     # Define methods and datasets to test
     methods_to_test = ["sublime"]
-    datasets_to_test = ["ogbn-products"]#, "citeseer", "pubmed"]
+    datasets_to_test = ["ogbn-arxiv", "ogbn-products", "citeseer", "pubmed"]
     
     # Run benchmarks
     results = run_benchmark(methods_to_test, datasets_to_test, n_runs=1)
