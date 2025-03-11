@@ -37,7 +37,6 @@ dependencies = [
     "torch_geometric",
     "torch_sparse",
     "torch_scatter",
-    "dgl<2+cu118",
     "ogb",
 ]
 
