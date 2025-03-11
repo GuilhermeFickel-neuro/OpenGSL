@@ -129,10 +129,18 @@ class SUBLIMESolver(Solver):
                     self.best_val_loss = loss_val
                     self.result['valid'] = acc_val
                     self.result['train'] = acc_train
-                    self.weights = deepcopy(model.state_dict())
-                    current_adj = dgl_graph_to_torch_sparse(adj).to_dense() if self.conf.sparse else adj
-                    self.adjs['final'] = current_adj.detach().clone()
-                    self.best_graph_test = deepcopy(adj)
+
+                    # Don't deepcopy the entire state dict, just save a regular copy
+                    self.weights = {k: v.cpu().clone() for k, v in model.state_dict().items()}
+
+                    # Don't convert to dense if sparse is True
+                    if self.conf.sparse:
+                        # Store the sparse adjacency matrix directly
+                        self.adjs['final'] = dgl_graph_to_torch_sparse(adj).clone()
+                    else:
+                        self.adjs['final'] = adj.detach().clone()
+
+                    self.best_graph_test = adj.clone() if hasattr(adj, 'clone') else adj
 
             if debug:
                 print("Epoch {:05d} | Time(s) {:.4f} | Loss(train) {:.4f} | Acc(train) {:.4f} | Loss(val) {:.4f} | Acc(val) {:.4f} | {}".format(
